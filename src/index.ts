@@ -25,8 +25,55 @@ export interface Env {
 	// MY_QUEUE: Queue;
 }
 
+import {
+  error,      // creates error responses
+  json,       // creates JSON responses
+	html,
+  Router,     // the ~440 byte router itself
+  withParams, // middleware: puts params directly on the Request
+} from 'itty-router'
+
+import { index } from './index/index';
+import { hello } from './hello/hello';
+import { post } from './post/post';
+
+// create a new Router
+const router = Router()
+
+router
+  // add some middleware upstream on all routes
+  .all('*', withParams)
+
+  // GET list of todos
+  // .get('/index.html', () => hello) <-- This doesn't work!?
+  .get('/index.html', () => {return index()})
+  .get('/hello.html', () => {return hello()})
+	.post('/micropub', (req) => {return post(req)})
+
+  // GET single todo, by ID
+  // .get(
+  //   '/todos/:id',
+  //   ({ id }) => todos.getById(id) || error(404, 'That todo was not found')
+  // )
+
+  // 404 for everything else
+  .all('*', () => error(404))
+
+// Example: Cloudflare Worker module syntax
+// export default {
+//   fetch: (request, ...args) =>
+//     router
+//       .handle(request, ...args)
+//       .then(json)     // send as JSON
+//       .catch(error),  // catch errors
+// }
+
 export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-		return new Response('Hello Worker!');
-	},
+		console.log('fetch...');
+		return router
+			.handle(request)
+			.then(request.url === '' || request.url.endsWith('.html') ? html : json)
+			.catch(error)  // catch errors
+	}
 };
