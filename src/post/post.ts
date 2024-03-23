@@ -13,10 +13,16 @@ interface MicropubObject {
 }
 
 function toMicropubObject(formData: FormData): MicropubObject {
+
+  const category = formData.getAll('category[]') as string[];
+  if (category.length === 0) {
+    category.push(formData.get('category') as string);
+  }
+
   return {
     h: formData.get('h') as keyof typeof Microformat,
     content: formData.get('content') as string,
-    category: formData.getAll('category[]') as string[],
+    category,
     photo: formData.get('photo') as string
   }
 }
