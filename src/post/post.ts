@@ -9,26 +9,21 @@ interface MicropubObject {
   h: keyof typeof Microformat;
   content: string;
   category: string[];
+  photo: string;
 }
 
 function toMicropubObject(formData: FormData): MicropubObject {
   return {
     h: formData.get('h') as keyof typeof Microformat,
     content: formData.get('content') as string,
-    category: formData.getAll('category[]') as string[]
+    category: formData.getAll('category[]') as string[],
+    photo: formData.get('photo') as string
   }
 }
 
 export async function post(request: Request, env: Env): Promise<Response> {
 
-  // const requestJson = await request.json<{}>()
-  // console.log('request json', requestJson);
-
-
   const formData = await request.formData();
-
-  console.log('formData entries', {entries: formData.entries()});
-  console.log('formData keys', {entries: formData.keys()});
 
   // convert to JSON
   const micropubObject = toMicropubObject(formData);
