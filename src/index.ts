@@ -48,7 +48,7 @@ router
   // .get('/index.html', () => hello) <-- This doesn't work!?
   .get('/index.html', () => {return index()})
   .get('/hello.html', () => {return hello()})
-	.post('/micropub', (req) => {return post(req)})
+	.post('/micropub', (req, env) => {return post(req, env)})
 
   // GET single todo, by ID
   // .get(
@@ -71,8 +71,9 @@ router
 export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
 		console.log('fetch...');
+
 		return router
-			.handle(request)
+			.handle(request, env, ctx)
 			.then(request.url === '' || request.url.endsWith('.html') ? html : json)
 			.catch(error)  // catch errors
 	}
