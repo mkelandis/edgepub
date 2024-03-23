@@ -1,3 +1,4 @@
 {
-  "vitest.enable": false
+  "vitest.enable": true,
+  "vitest.nodeEnv": {},
 }
