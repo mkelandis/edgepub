@@ -1,46 +1,34 @@
 import { status } from 'itty-router';
 import { Env } from '../env';
+import { MicropubJson, Microformat, postDataHandler } from '../microformats/microformats'; // Import the missing function
 
-export const Microformat = {
-  entry: 'entries'
-}
+type ContentType = keyof typeof postDataHandler;
 
-interface MicropubObject {
-  h: keyof typeof Microformat;
-  content: string;
-  category: string[];
-  photo: string;
-}
-
-function toMicropubObject(formData: FormData): MicropubObject {
-
-  const category = formData.getAll('category[]') as string[];
-  if (category.length === 0) {
-    category.push(formData.get('category') as string);
+async function toMicropubJson(request: Request): Promise<MicropubJson> {
+  const contentType = request.headers.get('Content-Type') as ContentType;
+  if (!contentType) {
+    throw new Error('No Content-Type header');
   }
 
-  return {
-    h: formData.get('h') as keyof typeof Microformat,
-    content: formData.get('content') as string,
-    category,
-    photo: formData.get('photo') as string
-  }
+  return await postDataHandler[contentType](request);
 }
+
 
 export async function post(request: Request, env: Env): Promise<Response> {
 
-  const formData = await request.formData();
-
   // convert to JSON
-  const micropubObject = toMicropubObject(formData);
-  console.log('post micropubObject', {micropubObject});
+  const micropubJson = await toMicropubJson(request);
+  const micropubJsonString = JSON.stringify(micropubJson, null, 2);
+  console.log(`micropubJson: ${micropubJsonString}`);
 
   const slug = getSlug();
-  const path = `micropub/${Microformat[micropubObject.h]}/${slug}`;
+  const micropubtype = micropubJson.type[0];
+  const folder = Microformat[micropubtype];
+  const path = `micropub/${folder}/${slug}`; // Add index signature to Microformat type
   const location = `https://${env.API_HOST}/${path}`;
 
   // store the data in r2 using the same path
-  await env.BUCKET.put(path, JSON.stringify(micropubObject, null, 2));
+  await env.BUCKET.put(path, micropubJsonString);
 
   // return a response
   const response = status(201);
