@@ -36,6 +36,7 @@ import {
 import { index } from './index/index';
 import { hello } from './hello/hello';
 import { post } from './post/post';
+import { getMicropubEntry, getMicropubPhoto } from './get/get';
 
 // create a new Router
 const router = Router()
@@ -46,9 +47,11 @@ router
 
   // GET list of todos
   // .get('/index.html', () => hello) <-- This doesn't work!?
-  .get('/index.html', () => {return index()})
-  .get('/hello.html', () => {return hello()})
-	.post('/micropub', (req, env) => {return post(req, env)})
+  .get('/index.html', (req, env) => {return index(req, env)})
+	.get('/micropub/entries/:slug', (req, env) => {return getMicropubEntry(req, env)})
+	.get('/micropub/photos/:slug/:filename', (req, env) => {return getMicropubPhoto(req, env)})
+	.get('/hello.html', () => {return hello()})
+	.post('/micropub', (req, env) => {return post(req, env)})	
 
   // GET single todo, by ID
   // .get(
