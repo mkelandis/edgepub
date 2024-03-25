@@ -11,6 +11,20 @@ export interface MicropubJson {
   photoFiles?: any[];
 }
 
+export enum MicropubAction {
+  UPDATE = "update",
+}
+
+export interface MicropubUpdate {
+  action: MicropubAction;
+  url: string;
+  replace?: any;
+  add?: any;
+  delete?: any;
+}
+
+export type MicropubPayload = MicropubJson | MicropubUpdate;
+
 export async function fromFormUrlEncoded(request: Request): Promise<MicropubJson> {
 
   const formData = await request.formData();
@@ -35,9 +49,9 @@ export async function fromFormUrlEncoded(request: Request): Promise<MicropubJson
 }
 
 // todo::filter these by known properties
-export async function fromJson(request: Request): Promise<MicropubJson> {
-  const micropubJson = await request.json<MicropubJson>();
-  return micropubJson; 
+export async function fromJson(request: Request): Promise<MicropubPayload> {
+  const payload = await request.json<MicropubPayload>();
+  return payload; 
 }
 
 export async function fromMultipartFormData(request: Request): Promise<MicropubJson> {
@@ -77,7 +91,7 @@ export async function fromMultipartFormData(request: Request): Promise<MicropubJ
 }
 
 export const postDataHandler = {
-  "application/x-www-form-urlencoded": fromFormUrlEncoded,
   "application/json": fromJson,
   "multipart/form-data": fromMultipartFormData,
+  "application/x-www-form-urlencoded": fromFormUrlEncoded,
 }
