@@ -1,12 +1,14 @@
 import { status } from 'itty-router';
 import { Env } from '../env';
-import { MicropubJson, fromMultipartFormData, postDataHandler } from '../microformats/microformats'; // Import the missing function
+import { MicropubAction, MicropubJson, MicropubUpdate, postDataHandler } from '../microformats/microformats'; // Import the missing function
 import { getPathPrefix } from '../path/path';
-import { createOne, createOneFile } from '../storage/post';
+import { createOne, createOneFile, updateOne } from '../storage/post';
+import { getOne } from '../storage/get';
+import { isObject } from '../utils/object';
 
 type ContentType = keyof typeof postDataHandler;
 
-async function toMicropubJson(request: Request): Promise<MicropubJson> {
+function getContentType(request: Request): ContentType {
   let contentType = request.headers.get('Content-Type') as ContentType;
   contentType = contentType.split(';')[0] as ContentType; // remove boundary for now
 
@@ -14,17 +16,70 @@ async function toMicropubJson(request: Request): Promise<MicropubJson> {
   if (!contentType) {
     throw new Error('No Content-Type header');
   }
-
-  return await postDataHandler[contentType](request);
+  return contentType
 }
 
+export async function postUpdate(req: Request, env: Env, micropubUpdate: MicropubUpdate) {
 
-export async function post(request: Request, env: Env): Promise<Response> {
+  // get the path without the host
+  const path = new URL(micropubUpdate.url).pathname.substring(1);
+  console.log(`update path: ${path}`);
 
-  const slug = getSlug();
+  const micropubJson = await getOne(path, env);
+
+  // update the data in r2 using the same path -- support the replace action
+  if (micropubUpdate.replace && !isObject(micropubUpdate.replace)) {
+    return status(400);
+  }
+
+  for (const [key, value] of Object.entries(micropubUpdate.replace ?? {})) {
+    micropubJson.properties[key] = value;
+  }
+
+  // support the add action
+  for (const [key, value] of Object.entries(micropubUpdate.add ?? {})) {
+    micropubJson.properties[key] = micropubJson.properties[key] ?? [];
+    micropubJson.properties[key].push(value);
+  }
+
+  // support the delete action
+  if (Array.isArray(micropubUpdate.delete)) {
+    for (const key of micropubUpdate.delete) {
+      console.log(`deleting key: ${key}`);
+      delete micropubJson.properties[key];
+    }
+  } else {
+    for (const [key, value] of Object.entries(micropubUpdate.delete ?? {})) {
+      if (Array.isArray(value)) {
+        console.log(`deleting value from array: ${key}, ${value}`);
+        micropubJson.properties[key] = micropubJson.properties[key] ?? [];
+        micropubJson.properties[key] = micropubJson.properties[key].filter((v: any) => !value.includes(v));
+      }
+    }  
+  }
+
+  // store the data in r2 using the same path
+  await updateOne(env, path, JSON.stringify(micropubJson, null, 2));
+
+  // return a response
+  const response = status(204);
+  return response;
+}
+
+export async function post(req: Request, env: Env): Promise<Response> {
+
+  const contentType = getContentType(req);
+
+  // check if this is an update (really? a POST should only create stuff!)
+  const payload = await postDataHandler[contentType](req) as any;
+  if (payload?.action === MicropubAction.UPDATE) {
+    return postUpdate(req, env, payload as MicropubUpdate);
+  }
 
   // convert to JSON
-  const micropubJson = await toMicropubJson(request);
+  const micropubJson = payload as MicropubJson;
+
+  const slug = getSlug();
 
   // handle any photos
   const photos: string[] = [];

@@ -17,9 +17,9 @@ export async function getMany(microformatsType: MicroformatType, env: Env): Prom
 export async function getOne(path: string, env: Env): Promise<MicropubJson> {
   console.log('getOne: ', {path, env});
   const r2Object = await env.BUCKET.get(path);
-  console.log('r2Object: ', r2Object);
 
   const text = await r2Object?.text() ?? '';
+  console.log('r2Object text: ', text);
   return JSON.parse(text);
 }
 
