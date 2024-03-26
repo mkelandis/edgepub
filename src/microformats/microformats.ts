@@ -13,6 +13,8 @@ export interface MicropubJson {
 
 export enum MicropubAction {
   UPDATE = "update",
+  DELETE = "delete",
+  UNDELETE = "undelete",
 }
 
 export interface MicropubUpdate {
@@ -25,9 +27,23 @@ export interface MicropubUpdate {
 
 export type MicropubPayload = MicropubJson | MicropubUpdate;
 
-export async function fromFormUrlEncoded(request: Request): Promise<MicropubJson> {
+export async function fromFormUrlEncoded(request: Request): Promise<MicropubPayload> {
 
   const formData = await request.formData();
+
+  // check for an action property
+  const action = formData.get('action');
+  if (!!action) {
+    return {
+      action: action as MicropubAction,
+      url: formData.get('url') as string,
+      // replace: formData.get('replace') as any,
+      // add: formData.get('add') as any,
+      // delete: formData.get('delete') as any,
+    } as MicropubUpdate;
+  }
+
+
 
   const category = formData.getAll('category[]') as string[];
   if (category.length === 0) {
