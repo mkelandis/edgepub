@@ -56,6 +56,9 @@ export async function getMicropubEntry(req: IRequest, env: Env) {
   console.log('getMicropubEntry:', {slug: req.params.slug});
   const pathPrefix = getPathPrefix('h-entry');
   const micropubJson = await getOne(`${pathPrefix}/${req.params.slug}`, env);
+  if (!micropubJson) {
+    return new Response('Not found', { status: 404 });
+  }
 
   console.log('micropubJson:', JSON.stringify(micropubJson));
 
