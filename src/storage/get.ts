@@ -26,10 +26,24 @@ export async function getOne(path: string, env: Env): Promise<MicropubJson | nul
   return JSON.parse(text);
 }
 
-export async function getOneFile(path: string, env: Env): Promise<ArrayBuffer | undefined> {
+export interface MicropubFile {
+  type: string;
+  size: number | undefined;
+  arrayBuffer: Promise<ArrayBuffer> | undefined;  
+}
+
+export async function getOneFile(path: string, env: Env): Promise<MicropubFile> {
   console.log('getOne: ', {path, env});
+
+  const r2ObjectHead = await env.BUCKET.head(path);
+  console.log('r2ObjectHead: ', r2ObjectHead);
+
   const r2Object = await env.BUCKET.get(path);
   console.log('r2Object: ', r2Object);
 
-  return r2Object?.arrayBuffer();
+  return {
+    type: r2ObjectHead?.httpMetadata?.contentType ?? 'image/jpeg', // for legacy reasons
+    size: r2ObjectHead?.size,
+    arrayBuffer: r2Object?.arrayBuffer()
+  };
 }
