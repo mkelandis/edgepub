@@ -6,7 +6,7 @@ export async function createOne(env: Env, path: string, micropubJsonString: stri
 
 export async function createOneFile(env: Env, path: string, file: File) {
 
-  const multipartUpload = await env.BUCKET.createMultipartUpload(path);
+  const multipartUpload = await env.BUCKET.createMultipartUpload(path, {httpMetadata: {contentType: file.type}});
   
   // log the file stream as a string without consuming it
   // const reader = file.stream().getReader();

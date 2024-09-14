@@ -1,6 +1,7 @@
 export const MicroformatFolder: any = {
   "h-entry": 'entries',
   "h-photo": 'photos',
+  "h-media": 'media',
 }
 
 export type MicroformatType = keyof typeof MicroformatFolder;
@@ -9,6 +10,11 @@ export interface MicropubJson {
   type: string[];
   properties: any;
   photoFiles?: any[];
+  mediaFiles?: any[];
+}
+
+export interface MicropubMedia {
+  files: any[];
 }
 
 export enum MicropubAction {
@@ -72,16 +78,14 @@ export async function fromJson(request: Request): Promise<MicropubPayload> {
 
 export async function fromMultipartFormData(request: Request): Promise<MicropubJson> {
 
-  console.log('fromMultipartFormData:');
-
   const formData = await request.formData();
+  console.log('fromMultipartFormData:', {formData});
 
   formData.forEach((value, key) => {
     console.log('key:', key);
     console.log('value:', value);
   });
 
-  const type = formData.get('h');
   const content = formData.get('content');
   const category = formData.getAll('category[]') as string[];
   if (category.length === 0) {
@@ -96,13 +100,25 @@ export async function fromMultipartFormData(request: Request): Promise<MicropubJ
     }
   }
 
+  const mediaFiles = formData.getAll('file[]') as File[];
+  if (mediaFiles.length === 0) {
+    const mediaFile = formData.get('file') as File;
+    if (mediaFile) {
+      mediaFiles.push(mediaFile);
+    }
+  }
+
+  const type = formData.get('h') ?? 'media'; // default to media (this is magical)
+  console.log('type:', type);
+
   return {
     type: [`h-${type}`],
     properties: {
       content: content ? [content] : undefined,
       category: category.length > 0 ? category : undefined,
     },
-    photoFiles
+    photoFiles,
+    mediaFiles
   }
 }
 

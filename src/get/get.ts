@@ -1,5 +1,5 @@
 import { Env } from "../env";
-import { MicropubJson } from "../microformats/microformats";
+import { MicropubJson, MicroformatType } from "../microformats/microformats";
 import { getPathPrefix } from "../path/path";
 import { getOne, getOneFile } from "../storage/get";
 import { IRequest, json } from "itty-router"
@@ -65,12 +65,21 @@ export async function getMicropubEntry(req: IRequest, env: Env) {
   return new Response(`<html>\n<head></head>\n\n<h1>This service uses edgepub</h1><ul>${toMicropubHtml(micropubJson)}</ul></body></html>`, { headers: { 'Content-Type': 'text/html' } });
 }
 
+export async function getMicropubMedia(req: IRequest, env: Env): Promise<Response> {
+  console.log('getMicropubMedia:', {slug: req.params.slug});
+  const pathPrefix = getPathPrefix('h-media');
+  const data = await getOneFile(`${pathPrefix}/${req.params.slug}/${req.params.filename}`, env);
+  return new Response(await data.arrayBuffer, {
+    headers: { 'Content-Type': data.type }
+  });
+}
+
 export async function getMicropubPhoto(req: IRequest, env: Env): Promise<Response> {
   console.log('getMicropubPhoto:', {slug: req.params.slug});
   const pathPrefix = getPathPrefix('h-photo');
   const data = await getOneFile(`${pathPrefix}/${req.params.slug}/${req.params.filename}`, env);
-  return new Response(data, {
-    headers: { 'Content-Type': 'image/jpeg' }
+  return new Response(await data.arrayBuffer, {
+    headers: { 'Content-Type': data.type }
   });
 }
 
