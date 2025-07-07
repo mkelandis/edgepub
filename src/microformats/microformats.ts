@@ -36,6 +36,7 @@ export type MicropubPayload = MicropubJson | MicropubUpdate;
 export async function fromFormUrlEncoded(request: Request): Promise<MicropubPayload> {
 
   const formData = await request.formData();
+	console.log('formData', JSON.stringify(formData));
 
   // check for an action property
   const action = formData.get('action');
@@ -73,7 +74,7 @@ export async function fromFormUrlEncoded(request: Request): Promise<MicropubPayl
 // todo::filter these by known properties
 export async function fromJson(request: Request): Promise<MicropubPayload> {
   const payload = await request.json<MicropubPayload>();
-  return payload; 
+  return payload;
 }
 
 export async function fromMultipartFormData(request: Request): Promise<MicropubJson> {

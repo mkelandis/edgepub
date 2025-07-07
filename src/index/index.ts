@@ -2,7 +2,6 @@ import { Env } from "../env";
 import { getMany } from "../storage/get";
 
 export async function index(req: Request, env: Env) {
-  console.log('index.ts: index()');
   const links = [
     '<link rel="authorization_endpoint" href="https://indieauth.com/auth">',
     '<link rel="token_endpoint" href="https://tokens.indieauth.com/token">',

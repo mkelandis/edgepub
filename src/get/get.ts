@@ -7,15 +7,15 @@ import { IRequest, json } from "itty-router"
 function toMicropubHtml(micropubJson: MicropubJson): string {
 
   let html = `<div class="${micropubJson.type[0]}">`;
-  
+
   for (const [key, values] of Object.entries(micropubJson.properties)) {
     switch (key) {
       case 'content':
         for (let value of values) {
-          value = value?.html ?? value; 
+          value = value?.html ?? value;
           if (value) {
             html += `<div class="e-content">${value}</div>`;
-          } 
+          }
         }
         break;
       case 'photo':
@@ -90,11 +90,11 @@ export async function getMicropubJsonFromSource(req: IRequest, env: Env): Promis
   // parse the path from url string
   const urlObj = new URL(url as string);
   const path = urlObj.pathname;
-  console.log('path:', path); 
+  console.log('path:', path);
 
   const r2path = path.slice(1);
   console.log('r2path:', r2path);
-  
+
   const micropubJson = await getOne(r2path, env);
   if (!micropubJson) {
     return new Response('Not found', { status: 404 });
